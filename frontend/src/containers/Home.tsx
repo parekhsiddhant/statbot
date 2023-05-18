@@ -2,10 +2,8 @@ import React, { useEffect, useState } from "react";
 import Chats from "../components/Chats/Chats";
 import Header from "../components/Header/Header";
 import Sidebar from "../components/Sidebar/Sidebar";
-const { Configuration, OpenAIApi } = require("openai");
 const axios = require("axios");
 import "./Home.css";
-const { REACT_APP_ENV } = process.env;
 
 const Home = () => {
   const [audioFile, setAudioFile] = useState<File | Blob | string>("");
@@ -13,10 +11,8 @@ const Home = () => {
   const [chats, setChats] = useState<Array<any>>([]);
   const [recordingDisabled, toggleRecordingDisabled] = useState<Boolean>(false);
 
-  const serverURL =
-    REACT_APP_ENV === "production"
-      ? "http://ec2-52-66-222-47.ap-south-1.compute.amazonaws.com/"
-      : "http://localhost:4000";
+  const serverURL = "http://ec2-52-66-222-47.ap-south-1.compute.amazonaws.com";
+  // const serverURL = "http://localhost:4000";
 
   useEffect(() => {
     if (audioFile && audioFile !== "") {
