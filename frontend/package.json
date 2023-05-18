@@ -14,6 +14,7 @@
     "@types/react": "^18.0.38",
     "@types/react-dom": "^18.0.11",
     "css-loader": "^6.7.3",
+    "dotenv": "^16.0.3",
     "html-webpack-plugin": "^5.5.1",
     "mic-recorder-to-mp3": "^2.2.2",
     "mini-css-extract-plugin": "^2.7.5",
@@ -28,6 +29,7 @@
     "openai": "^3.2.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-icons": "^4.8.0"
+    "react-icons": "^4.8.0",
+    "react-scripts": "^5.0.1"
   }
 }
