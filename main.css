@@ -1,3 +1,6 @@
+/*!**********************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./src/components/Chats/Chats.css ***!
+  \**********************************************************************************/
 .chats-container {
   overflow: auto;
   padding: 1% 1% 0 1%;
@@ -32,10 +35,16 @@
 .chat-message {
   padding: 1px 10px 1px 0px;  
 }
+/*!************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./src/components/Header/Header.css ***!
+  \************************************************************************************/
 .header-container {
   font-size: 30px;
   color: white;
 }
+/*!**************************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./src/components/Sidebar/Sidebar.css ***!
+  \**************************************************************************************/
 .sidebar-container {
   display: flex;
   justify-content: center;
@@ -55,6 +64,9 @@
 .btn:hover {
   cursor: pointer;
 }
+/*!***************************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./src/containers/Home.css ***!
+  \***************************************************************************/
 .home-container {
   overflow: hidden;
   position: relative;
@@ -89,6 +101,9 @@
   width: 75%;
   height: 90vh;
 }
+/*!*****************************************************************!*\
+  !*** css ./node_modules/css-loader/dist/cjs.js!./src/index.css ***!
+  \*****************************************************************/
 html {
   height: 100%;
 }
@@ -98,3 +113,5 @@ body {
   padding: 0;
   height: 100%;
 }
+
+/*# sourceMappingURL=main.css.map*/
