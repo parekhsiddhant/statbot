@@ -5,12 +5,18 @@ import Sidebar from "../components/Sidebar/Sidebar";
 const { Configuration, OpenAIApi } = require("openai");
 const axios = require("axios");
 import "./Home.css";
+const { REACT_APP_ENV } = process.env;
 
 const Home = () => {
   const [audioFile, setAudioFile] = useState<File | Blob | string>("");
   const [outputFile, setOutputFile] = useState<File | null>(null);
   const [chats, setChats] = useState<Array<any>>([]);
   const [recordingDisabled, toggleRecordingDisabled] = useState<Boolean>(false);
+
+  const serverURL =
+    REACT_APP_ENV === "production"
+      ? "http://ec2-52-66-222-47.ap-south-1.compute.amazonaws.com/"
+      : "http://localhost:4000";
 
   useEffect(() => {
     if (audioFile && audioFile !== "") {
@@ -40,10 +46,7 @@ const Home = () => {
       formData.append("file", audioFile);
       formData.append("chats", JSON.stringify(chats));
       setOutputFile(null);
-      const result = await axios.post(
-        "http://localhost:4000/user-query",
-        formData
-      );
+      const result = await axios.post(`${serverURL}/user-query`, formData);
       if (result?.data?.data?.chats?.length) {
         let localChats = result?.data?.data?.chats;
         setChats([...localChats]);
@@ -60,7 +63,7 @@ const Home = () => {
         text: text,
       };
       const result = await axios.post(
-        "http://localhost:4000/get-audio-from-text",
+        `${serverURL}/get-audio-from-text`,
         payload,
         { responseType: "arraybuffer" }
       );
