@@ -6,20 +6,12 @@ const textToSpeech = require("@google-cloud/text-to-speech");
 const ttsClient = new textToSpeech.TextToSpeechClient();
 const initialPrompt = require("./initial_prompt");
 
-/**
- ***************** OPEN AI config START *******************************
- */
-const configuration = new Configuration({
-  apiKey: process.env["OPENAI_API_KEY"],
-});
-const openai = new OpenAIApi(configuration);
-/**
- ***************** OPEN AI config END ********************************
- */
-
 const transcribeAudio = async (chats: any, audioFilePath: any) => {
   try {
-    console.log(audioFilePath);
+    const configuration = new Configuration({
+      apiKey: process.env["OPENAI_API_KEY"],
+    });
+    const openai = new OpenAIApi(configuration);
     const res = await openai.createTranscription(
       fs.createReadStream(audioFilePath),
       "whisper-1",
@@ -28,9 +20,7 @@ const transcribeAudio = async (chats: any, audioFilePath: any) => {
       0,
       "en"
     );
-    console.log(res?.status.res?.data);
     if (res.status === 200 && res?.data?.text) {
-      console.log("Transcription - ", res.data);
       let message = res.data.text;
       const chat = {
         role: "user",
@@ -48,7 +38,6 @@ const transcribeAudio = async (chats: any, audioFilePath: any) => {
 const getModelResponse = async (chats: any) => {
   try {
     let payload = chats.map((chat: any) => JSON.parse(JSON.stringify(chat)));
-    console.log("Chats before - ", chats);
 
     for (let i = 1; i < payload.length; ++i) {
       if (payload[i].role === "user") {
@@ -58,7 +47,10 @@ const getModelResponse = async (chats: any) => {
       }
     }
 
-    console.log("Chats after - ", chats);
+    const configuration = new Configuration({
+      apiKey: process.env["OPENAI_API_KEY"],
+    });
+    const openai = new OpenAIApi(configuration);
 
     const res = await openai.createChatCompletion({
       model: "gpt-3.5-turbo",
@@ -78,7 +70,6 @@ const getModelResponse = async (chats: any) => {
 
 const googleTTS = async (text: any) => {
   try {
-    console.log("In here!", text);
     const payload = {
       input: { text: text },
       voice: { languageCode: "en-US", ssmlGender: "NEUTRAL" },
@@ -89,7 +80,6 @@ const googleTTS = async (text: any) => {
     const writeFile = util.promisify(fs.writeFile);
     const fileName = Date.now() + "-output.mp3";
     await writeFile(`outputs/${fileName}`, res.audioContent, "binary");
-    console.log("File written!");
 
     return fileName;
   } catch (err) {
@@ -122,7 +112,6 @@ exports.answerUserQuery = [
 
       fs.unlink(audioFilePath, (err) => {
         if (err) throw err;
-        console.log("File deleted");
       });
 
       return apiResponse.successResponseWithData(res, "Success", {
@@ -152,7 +141,6 @@ exports.getAudioFromText = [
       res.set("Content-Disposition", `attachment; filename="${ttsFilename}"`);
       res.sendFile(ttsFilename, { root: "outputs" });
     } catch (err: any) {
-      console.log(err);
       return apiResponse.ErrorResponse(res, err.message);
     }
   },
