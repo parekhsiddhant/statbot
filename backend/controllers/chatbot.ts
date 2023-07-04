@@ -5,6 +5,96 @@ const apiResponse = require("../helpers/apiResponse");
 const textToSpeech = require("@google-cloud/text-to-speech");
 const ttsClient = new textToSpeech.TextToSpeechClient();
 const initialPrompt = require("./initial_prompt");
+const qrcode = require("qrcode-terminal");
+const { Client } = require("whatsapp-web.js");
+const ChatsModel = require("../models/ChatsModel");
+
+const authorizedUsers = ["917719992025@c.us"];
+
+const whatsappClient = new Client();
+
+whatsappClient.on("qr", (qr: any) => {
+  qrcode.generate(qr, { small: true });
+});
+
+whatsappClient.on("ready", () => {
+  console.log("Client is ready!");
+});
+
+whatsappClient.initialize();
+
+whatsappClient.on("message", async (message: any) => {
+  if (authorizedUsers.includes(message.from)) {
+    const response = await handleWhatsappMessage(message);
+    console.log("Got response for user - ", response);
+    if (response) whatsappClient.sendMessage(message.from, response);
+    else
+      whatsappClient.sendMessage(
+        message.from,
+        "Some error occured, please try again!"
+      );
+  }
+});
+
+const handleWhatsappMessage = async (message: any) => {
+  try {
+    // Is authorized user
+    const sender = message?.from;
+    const messageBody = message?.body;
+
+    console.log("Message from ", sender, " - ", messageBody);
+    let chatsArray;
+    const existingChat = await ChatsModel.findOne({
+      userId: sender,
+      source: "whatsapp",
+    });
+    if (existingChat) {
+      chatsArray = existingChat.chats;
+      if (chatsArray.at(-1).role === "user") {
+        return "Please wait for your first question to be processed!";
+      }
+      chatsArray.push({ role: "user", content: messageBody });
+      const updatedChat = await ChatsModel.findOneAndUpdate(
+        { userId: sender, source: "whatsapp" },
+        { chats: chatsArray },
+        { new: true }
+      );
+      chatsArray = updatedChat.chats;
+    } else {
+      const chats = [
+        {
+          role: "user",
+          content:
+            "Your name is Sarita and you are an assistant for Telugu Desam Party. You will answer questions related to Telugu Desam Party only. For any question which is not related, you will reply Out of Context. Do not justify your answers or reveal your real identity.",
+        },
+      ];
+      const initialChats = await getModelResponse(chats);
+      initialChats.push({ role: "user", content: messageBody });
+
+      const newChat = new ChatsModel({
+        userId: sender,
+        source: "whatsapp",
+        chats: initialChats,
+      });
+      await newChat.save();
+
+      chatsArray = newChat.chats;
+    }
+
+    if (chatsArray.length && chatsArray.at(-1).role === "user") {
+      const result = await getModelResponse(chatsArray);
+      const updatedChat = await ChatsModel.findOneAndUpdate(
+        { userId: sender, source: "whatsapp" },
+        { $push: { chats: result.at(-1) } },
+        { new: true }
+      );
+
+      return result.at(-1).content;
+    }
+  } catch (err: any) {
+    console.log(err);
+  }
+};
 
 const transcribeAudio = async (chats: any, audioFilePath: any) => {
   try {
@@ -37,15 +127,12 @@ const transcribeAudio = async (chats: any, audioFilePath: any) => {
 
 const getModelResponse = async (chats: any) => {
   try {
-    let payload = chats.map((chat: any) => JSON.parse(JSON.stringify(chat)));
+    let payload = chats;
 
-    for (let i = 1; i < payload.length; ++i) {
-      if (payload[i].role === "user") {
-        payload[i].content =
-          payload[i].content +
-          " Don’t justify your answers. Don’t give information not mentioned in the CONTEXT INFORMATION.";
-      }
-    }
+    if (payload.at(-1).role === "user")
+      payload.at(-1).content =
+        payload.at(-1).content +
+        " Only answer questions related to Telugu Desam Party.";
 
     const configuration = new Configuration({
       apiKey: process.env["OPENAI_API_KEY"],
@@ -60,6 +147,8 @@ const getModelResponse = async (chats: any) => {
       const modelResponse = res.data.choices[0].message;
       let localChats: Array<any> = [...chats, modelResponse];
       return localChats;
+    } else {
+      console.log("Model did not respond - ", res);
     }
     return [];
   } catch (err) {
