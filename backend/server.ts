@@ -1,9 +1,23 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
+import mongoose from "mongoose";
 const indexRouter = require("./routes/indexRouter");
 
 dotenv.config({ path: __dirname + "/.env" });
+
+const MONGODB_URL = process.env.MONGODB_URL || "";
+mongoose
+  .connect(MONGODB_URL, {
+    keepAlive: true,
+  })
+  .then(() => {
+    console.log("Connected to Mongo...");
+  })
+  .catch((err) => {
+    console.log("Error connecting to mongo - ", err);
+    process.exit();
+  });
 
 const app = express();
 const port = process.env.PORT || 4000;
