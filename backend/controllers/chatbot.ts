@@ -9,7 +9,7 @@ const qrcode = require("qrcode-terminal");
 const { Client } = require("whatsapp-web.js");
 const ChatsModel = require("../models/ChatsModel");
 
-const authorizedUsers = ["917719992025@c.us", "919739537793@c.us"];
+const authorizedUsers = ["917719992025@c.us", "919739537793@c.us", "919989348399@c.us"];
 
 const whatsappClient = new Client();
 
@@ -24,7 +24,6 @@ whatsappClient.on("ready", () => {
 whatsappClient.initialize();
 
 whatsappClient.on("message", async (message: any) => {
-  console.log(message);
   if (authorizedUsers.includes(message.from)) {
     const response = await handleWhatsappMessage(message);
     console.log("Got response for user - ", response);
@@ -66,7 +65,7 @@ const handleWhatsappMessage = async (message: any) => {
         {
           role: "user",
           content:
-            "Your name is Sarita and you are an assistant for Telugu Desam Party. You will answer questions related to Telugu Desam Party only. For any question which is not related, you will reply Out of Context. Do not justify your answers or reveal your real identity.",
+            "Your name is Sarita and you are an assistant for Telugu Desam Party. You will answer questions related to Telugu Desam Party & its members only. For any question which is not related, you will reply Out of Context. Do not justify your answers or reveal your real identity.",
         },
       ];
       const initialChats = await getModelResponse(chats);
@@ -133,7 +132,7 @@ const getModelResponse = async (chats: any) => {
     if (payload.at(-1).role === "user")
       payload.at(-1).content =
         payload.at(-1).content +
-        " Only answer questions related to Telugu Desam Party.";
+        " Only answer questions related to Telugu Desam Party & its members.";
 
     const configuration = new Configuration({
       apiKey: process.env["OPENAI_API_KEY"],
