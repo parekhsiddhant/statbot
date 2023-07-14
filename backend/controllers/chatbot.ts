@@ -9,7 +9,7 @@ const qrcode = require("qrcode-terminal");
 const { Client } = require("whatsapp-web.js");
 const ChatsModel = require("../models/ChatsModel");
 
-const authorizedUsers = ["917719992025@c.us"];
+const authorizedUsers = ["917719992025@c.us", "919739537793@c.us"];
 
 const whatsappClient = new Client();
 
@@ -24,6 +24,7 @@ whatsappClient.on("ready", () => {
 whatsappClient.initialize();
 
 whatsappClient.on("message", async (message: any) => {
+  console.log(message);
   if (authorizedUsers.includes(message.from)) {
     const response = await handleWhatsappMessage(message);
     console.log("Got response for user - ", response);
@@ -149,6 +150,11 @@ const getModelResponse = async (chats: any) => {
       return localChats;
     } else {
       console.log("Model did not respond - ", res);
+      let localChats: Array<any> = [
+        ...chats,
+        { role: "assistant", content: "Error generating response." },
+      ];
+      return localChats;
     }
     return [];
   } catch (err) {
@@ -234,3 +240,25 @@ exports.getAudioFromText = [
     }
   },
 ];
+
+// exports.devapi = [
+//   async function (req: any, res: any) {
+//     try {
+//       console.log(req.body.chats);
+//       const originalChats = JSON.parse(req.body.chats);
+//       let chats = [...originalChats];
+
+//       if (chats?.length) {
+//         const response = await getModelResponse(chats);
+//         chats = [...response];
+//       }
+
+//       return apiResponse.successResponseWithData(res, "Success", {
+//         chats: chats,
+//       });
+//     } catch (err: any) {
+//       console.log(err);
+//       return apiResponse.ErrorResponse(res, err.message);
+//     }
+//   },
+// ];
