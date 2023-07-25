@@ -26,7 +26,7 @@ whatsappClient.initialize();
 whatsappClient.on("message", async (message: any) => {
   if (authorizedUsers.includes(message.from)) {
     const response = await handleWhatsappMessage(message);
-    console.log("Got response for user - ", response);
+    console.log("Got response for user");
     if (response) whatsappClient.sendMessage(message.from, response);
     else
       whatsappClient.sendMessage(
@@ -42,7 +42,7 @@ const handleWhatsappMessage = async (message: any) => {
     const sender = message?.from;
     const messageBody = message?.body;
 
-    console.log("Message from ", sender, " - ", messageBody);
+    console.log("Message from ", sender);
     let chatsArray;
     const existingChat = await ChatsModel.findOne({
       userId: sender,
