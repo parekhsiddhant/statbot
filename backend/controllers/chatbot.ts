@@ -61,14 +61,9 @@ const handleWhatsappMessage = async (message: any) => {
       );
       chatsArray = updatedChat.chats;
     } else {
-      const chats = [
-        {
-          role: "user",
-          content:
-            "Your name is Sarita and you are an assistant for Telugu Desam Party. You will answer questions related to Telugu Desam Party & its members only. For any question which is not related, you will reply Out of Context. Do not justify your answers or reveal your real identity.",
-        },
-      ];
+      const chats = [{ role: "user", content: initialPrompt.default }];
       const initialChats = await getModelResponse(chats);
+
       initialChats.push({ role: "user", content: messageBody });
 
       const newChat = new ChatsModel({
@@ -129,10 +124,10 @@ const getModelResponse = async (chats: any) => {
   try {
     let payload = chats;
 
-    if (payload.at(-1).role === "user")
-      payload.at(-1).content =
-        payload.at(-1).content +
-        " Only answer questions related to Telugu Desam Party & its members.";
+    // if (payload.at(-1).role === "user")
+    //   payload.at(-1).content =
+    //     payload.at(-1).content +
+    //     " Only answer questions related to Telugu Desam Party & its members.";
 
     const configuration = new Configuration({
       apiKey: process.env["OPENAI_API_KEY"],
