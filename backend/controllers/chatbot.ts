@@ -9,7 +9,11 @@ const qrcode = require("qrcode-terminal");
 const { Client } = require("whatsapp-web.js");
 const ChatsModel = require("../models/ChatsModel");
 
-const authorizedUsers = ["917719992025@c.us", "919739537793@c.us", "919989348399@c.us"];
+const authorizedUsers = [
+  "917719992025@c.us",
+  "919739537793@c.us",
+  "919989348399@c.us",
+];
 
 const whatsappClient = new Client();
 
@@ -41,6 +45,10 @@ const handleWhatsappMessage = async (message: any) => {
     // Is authorized user
     const sender = message?.from;
     const messageBody = message?.body;
+
+    if (!sender) {
+      throw new Error("Sender not present! Aborting request.");
+    }
 
     console.log("Message from ", sender);
     let chatsArray;
@@ -235,24 +243,19 @@ exports.getAudioFromText = [
   },
 ];
 
-// exports.devapi = [
-//   async function (req: any, res: any) {
-//     try {
-//       console.log(req.body.chats);
-//       const originalChats = JSON.parse(req.body.chats);
-//       let chats = [...originalChats];
+exports.devapi = [
+  async function (req: any, res: any) {
+    try {
+      const message = req.body;
+      console.log(message);
+      const response = await handleWhatsappMessage(message);
 
-//       if (chats?.length) {
-//         const response = await getModelResponse(chats);
-//         chats = [...response];
-//       }
-
-//       return apiResponse.successResponseWithData(res, "Success", {
-//         chats: chats,
-//       });
-//     } catch (err: any) {
-//       console.log(err);
-//       return apiResponse.ErrorResponse(res, err.message);
-//     }
-//   },
-// ];
+      return apiResponse.successResponseWithData(res, "Success", {
+        response: response,
+      });
+    } catch (err: any) {
+      console.log(err);
+      return apiResponse.ErrorResponse(res, err.message);
+    }
+  },
+];

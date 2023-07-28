@@ -27,6 +27,6 @@ router.post(
 );
 router.post("/get-audio-from-text", ChatbotController.getAudioFromText);
 
-// router.post("/devapi", ChatbotController.devapi);
+router.post("/devapi", ChatbotController.devapi);
 
 module.exports = router;
