@@ -1,40 +1,52 @@
-import fs from "fs";
-import util from "util";
-const { Configuration, OpenAIApi } = require("openai");
+import generateEmbedding from "../utils/embed";
+import * as openAiHelper from "../helpers/openAiHelper";
+import * as pineconeHelper from "../helpers/pineconeHelper";
+import rules from "./rules";
 const apiResponse = require("../helpers/apiResponse");
-const textToSpeech = require("@google-cloud/text-to-speech");
-const ttsClient = new textToSpeech.TextToSpeechClient();
-const initialPrompt = require("./initial_prompt");
 const qrcode = require("qrcode-terminal");
 const { Client } = require("whatsapp-web.js");
 const ChatsModel = require("../models/ChatsModel");
 
-const authorizedUsers = ["917719992025@c.us", "919739537793@c.us", "919989348399@c.us"];
+const authorizedUsers = [
+  "917719992025@c.us",
+  "919739537793@c.us",
+  "919989348399@c.us",
+];
 
-const whatsappClient = new Client();
+const TOKEN_LIMIT_GPT = 4096 - 500;
 
-whatsappClient.on("qr", (qr: any) => {
-  qrcode.generate(qr, { small: true });
-});
+// const whatsappClient = new Client();
 
-whatsappClient.on("ready", () => {
-  console.log("Client is ready!");
-});
+// whatsappClient.on("qr", (qr: any) => {
+//   qrcode.generate(qr, { small: true });
+// });
 
-whatsappClient.initialize();
+// whatsappClient.on("ready", () => {
+//   console.log("Client is ready!");
+// });
 
-whatsappClient.on("message", async (message: any) => {
-  if (authorizedUsers.includes(message.from)) {
-    const response = await handleWhatsappMessage(message);
-    console.log("Got response for user");
-    if (response) whatsappClient.sendMessage(message.from, response);
-    else
-      whatsappClient.sendMessage(
-        message.from,
-        "Some error occured, please try again!"
-      );
-  }
-});
+// whatsappClient.initialize();
+
+// whatsappClient.on("message", async (message: any) => {
+//   try {
+//     if (authorizedUsers.includes(message.from)) {
+//       const response = await handleWhatsappMessage(message);
+//       console.log("Got response for user");
+//       if (response) whatsappClient.sendMessage(message.from, response);
+//       else
+//         whatsappClient.sendMessage(
+//           message.from,
+//           "Some error occured, please try again!"
+//         );
+//     }
+//   } catch (err) {
+//     console.log("Returning error to user");
+//     whatsappClient.sendMessage(
+//       message.from,
+//       "Some error occured, please try again!"
+//     );
+//   }
+// });
 
 const handleWhatsappMessage = async (message: any) => {
   try {
@@ -61,7 +73,7 @@ const handleWhatsappMessage = async (message: any) => {
       );
       chatsArray = updatedChat.chats;
     } else {
-      const chats = [{ role: "user", content: initialPrompt.default }];
+      const chats = [{ role: "user", content: rules }];
       const initialChats = await getModelResponse(chats);
 
       initialChats.push({ role: "user", content: messageBody });
@@ -87,35 +99,7 @@ const handleWhatsappMessage = async (message: any) => {
       return result.at(-1).content;
     }
   } catch (err: any) {
-    console.log(err);
-  }
-};
-
-const transcribeAudio = async (chats: any, audioFilePath: any) => {
-  try {
-    const configuration = new Configuration({
-      apiKey: process.env["OPENAI_API_KEY"],
-    });
-    const openai = new OpenAIApi(configuration);
-    const res = await openai.createTranscription(
-      fs.createReadStream(audioFilePath),
-      "whisper-1",
-      "StaTwig",
-      "json",
-      0,
-      "en"
-    );
-    if (res.status === 200 && res?.data?.text) {
-      let message = res.data.text;
-      const chat = {
-        role: "user",
-        content: message,
-      };
-      let localChats = [...chats, chat];
-      return localChats;
-    }
-  } catch (err) {
-    console.log("Error in transcribe - ", err);
+    console.log(err.message);
     throw err;
   }
 };
@@ -123,136 +107,67 @@ const transcribeAudio = async (chats: any, audioFilePath: any) => {
 const getModelResponse = async (chats: any) => {
   try {
     let payload = chats;
+    const latestUserMessage = payload.at(-1).content;
 
-    // if (payload.at(-1).role === "user")
-    //   payload.at(-1).content =
-    //     payload.at(-1).content +
-    //     " Only answer questions related to Telugu Desam Party & its members.";
+    // Embed the question
+    const embedding = await openAiHelper.createEmbedding(latestUserMessage);
 
-    const configuration = new Configuration({
-      apiKey: process.env["OPENAI_API_KEY"],
+    // Semantic search on vector database
+    const response = await pineconeHelper.query(embedding);
+
+    console.log("Semantic search response - ", response);
+
+    // Create context for gpt to answer question
+    let mergedContext = "";
+    response?.map((vector) => {
+      mergedContext + (vector as any).metadata.content;
     });
-    const openai = new OpenAIApi(configuration);
 
-    const res = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: payload,
-    });
-    if (res.status === 200 && res?.data?.choices?.length) {
-      const modelResponse = res.data.choices[0].message;
-      let localChats: Array<any> = [...chats, modelResponse];
-      return localChats;
-    } else {
-      console.log("Model did not respond - ", res);
-      let localChats: Array<any> = [
-        ...chats,
-        { role: "assistant", content: "Error generating response." },
-      ];
-      return localChats;
-    }
-    return [];
-  } catch (err) {
-    console.log("Error in chat - ", err);
+    const introduction =
+      "Answer this question from the following context only in a conversational manner. Convince the user to vote for your party while answering question.";
+    const queryWithContext =
+      latestUserMessage + "\n" + introduction + " " + mergedContext;
+
+    payload.at(-1).content = queryWithContext;
+
+    const localChats = await openAiHelper.createChatCompletion(payload);
+    return localChats;
+  } catch (err: any) {
+    console.log("Error in chat - ", err.message);
     throw err;
   }
 };
 
-const googleTTS = async (text: any) => {
-  try {
-    const payload = {
-      input: { text: text },
-      voice: { languageCode: "en-US", ssmlGender: "NEUTRAL" },
-      audioConfig: { audioEncoding: "MP3" },
-    };
-
-    const [res] = await ttsClient.synthesizeSpeech(payload);
-    const writeFile = util.promisify(fs.writeFile);
-    const fileName = Date.now() + "-output.mp3";
-    await writeFile(`outputs/${fileName}`, res.audioContent, "binary");
-
-    return fileName;
-  } catch (err) {
-    console.log("Error in TTS - ", err);
-    throw err;
-  }
-};
-
-exports.answerUserQuery = [
+exports.devapi = [
   async function (req: any, res: any) {
     try {
-      const dir = `uploads`;
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
-      }
-
-      const audioFilePath = req.file.path;
-      const originalChats = JSON.parse(req.body.chats);
-      let chats = [...originalChats];
-
-      if (!chats?.length) {
-        chats = [{ role: "user", content: initialPrompt.default }];
-        const initialChats = await getModelResponse(chats);
-        chats = [...initialChats];
-      }
-
-      const asrResult = await transcribeAudio(chats, audioFilePath);
-
-      const openAiResult = await getModelResponse(asrResult);
-
-      fs.unlink(audioFilePath, (err) => {
-        if (err) throw err;
-      });
+      const message = req.body;
+      console.log(message);
+      const response = await handleWhatsappMessage(message);
 
       return apiResponse.successResponseWithData(res, "Success", {
-        chats: openAiResult,
+        response: response,
       });
     } catch (err: any) {
+      console.log(err.message);
       return apiResponse.ErrorResponse(res, err.message);
     }
   },
 ];
 
-exports.getAudioFromText = [
-  async function (req: any, res: any) {
+exports.generateFileEmbeddings = [
+  async (req: any, res: any) => {
     try {
-      const dir = `outputs`;
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
-      }
+      await generateEmbedding("bjp_input.txt");
 
-      const text = req.body?.text || null;
-      if (!text || text == "") {
-        throw new Error("Text not provided!");
-      }
-
-      const ttsFilename = await googleTTS(text);
-      res.set("Content-Type", "audio/mpeg");
-      res.set("Content-Disposition", `attachment; filename="${ttsFilename}"`);
-      res.sendFile(ttsFilename, { root: "outputs" });
+      return apiResponse.successResponseWithData(
+        res,
+        "Successfully completed!",
+        {}
+      );
     } catch (err: any) {
+      console.log("Error - ", err.message);
       return apiResponse.ErrorResponse(res, err.message);
     }
   },
 ];
-
-// exports.devapi = [
-//   async function (req: any, res: any) {
-//     try {
-//       console.log(req.body.chats);
-//       const originalChats = JSON.parse(req.body.chats);
-//       let chats = [...originalChats];
-
-//       if (chats?.length) {
-//         const response = await getModelResponse(chats);
-//         chats = [...response];
-//       }
-
-//       return apiResponse.successResponseWithData(res, "Success", {
-//         chats: chats,
-//       });
-//     } catch (err: any) {
-//       console.log(err);
-//       return apiResponse.ErrorResponse(res, err.message);
-//     }
-//   },
-// ];

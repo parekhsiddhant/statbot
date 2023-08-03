@@ -5,7 +5,6 @@ import mongoose from "mongoose";
 const indexRouter = require("./routes/indexRouter");
 
 dotenv.config({ path: __dirname + "/.env" });
-
 const MONGODB_URL = process.env.MONGODB_URL || "";
 mongoose
   .connect(MONGODB_URL, {

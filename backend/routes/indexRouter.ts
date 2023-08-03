@@ -20,13 +20,14 @@ router.get("/", function (req: any, res: any) {
   res.status(200).json({ status: "OK", message: "Chatbot up and running!" });
 });
 
-router.post(
-  "/user-query",
-  upload.single("file"),
-  ChatbotController.answerUserQuery
-);
-router.post("/get-audio-from-text", ChatbotController.getAudioFromText);
+// router.post(
+//   "/user-query",
+//   upload.single("file"),
+//   ChatbotController.answerUserQuery
+// );
+// router.post("/get-audio-from-text", ChatbotController.getAudioFromText);
 
-// router.post("/devapi", ChatbotController.devapi);
+router.post("/devapi", ChatbotController.devapi);
+router.post("/generateFileEmbeddings", ChatbotController.generateFileEmbeddings);
 
 module.exports = router;
