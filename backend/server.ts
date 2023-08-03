@@ -2,7 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import mongoose from "mongoose";
-const indexRouter = require("./routes/indexRouter");
+import indexRouter from "./routes/indexRouter";
 
 dotenv.config({ path: __dirname + "/.env" });
 const MONGODB_URL = process.env.MONGODB_URL || "";

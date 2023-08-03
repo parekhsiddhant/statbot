@@ -1,12 +1,13 @@
-exports.successResponse = function (res: any, msg: any) {
+const successResponse = function (res: any, msg: any) {
   const data = {
     success: true,
     message: msg,
   };
   return res.status(200).json(data);
 };
+export { successResponse };
 
-exports.successResponseWithData = function (res: any, msg: any, data: any) {
+const successResponseWithData = function (res: any, msg: any, data: any) {
   const resData = {
     success: true,
     message: msg,
@@ -14,24 +15,27 @@ exports.successResponseWithData = function (res: any, msg: any, data: any) {
   };
   return res.status(200).json(resData);
 };
+export { successResponseWithData };
 
-exports.ErrorResponse = function (res: any, msg: any) {
+const ErrorResponse = function (res: any, msg: any) {
   const data = {
     success: false,
     message: msg,
   };
   return res.status(500).json(data);
 };
+export { ErrorResponse };
 
-exports.notFoundResponse = function (res: any, msg: any) {
+const notFoundResponse = function (res: any, msg: any) {
   const data = {
     success: false,
     message: msg,
   };
   return res.status(404).json(data);
 };
+export { notFoundResponse };
 
-exports.validationErrorWithData = function (res: any, msg: any, data: any) {
+const validationErrorWithData = function (res: any, msg: any, data: any) {
   const resData = {
     success: false,
     message: msg,
@@ -39,19 +43,22 @@ exports.validationErrorWithData = function (res: any, msg: any, data: any) {
   };
   return res.status(400).json(resData);
 };
+export { validationErrorWithData };
 
-exports.unauthorizedResponse = function (res: any, msg: any) {
+const unauthorizedResponse = function (res: any, msg: any) {
   const data = {
     success: false,
     message: msg,
   };
   return res.status(401).json(data);
 };
+export { unauthorizedResponse };
 
-exports.forbiddenResponse = function (res: any, msg: any) {
+const forbiddenResponse = function (res: any, msg: any) {
   const data = {
     success: false,
     message: msg,
   };
   return res.status(403).json(data);
 };
+export { forbiddenResponse };

@@ -2,10 +2,10 @@ import generateEmbedding from "../utils/embed";
 import * as openAiHelper from "../helpers/openAiHelper";
 import * as pineconeHelper from "../helpers/pineconeHelper";
 import rules from "./rules";
-const apiResponse = require("../helpers/apiResponse");
-const qrcode = require("qrcode-terminal");
-const { Client } = require("whatsapp-web.js");
-const ChatsModel = require("../models/ChatsModel");
+import * as apiResponse from "../helpers/apiResponse";
+import qrcode from "qrcode-terminal";
+import { Client } from "whatsapp-web.js";
+import ChatsModel from "../models/ChatsModel";
 
 const authorizedUsers = [
   "917719992025@c.us",
@@ -71,6 +71,7 @@ const handleWhatsappMessage = async (message: any) => {
         { chats: chatsArray },
         { new: true }
       );
+      if (!updatedChat) throw new Error("Could not update conversation in DB!");
       chatsArray = updatedChat.chats;
     } else {
       const chats = [{ role: "user", content: rules }];
@@ -138,7 +139,7 @@ const getModelResponse = async (chats: any) => {
   }
 };
 
-exports.devapi = [
+const devapi = [
   async function (req: any, res: any) {
     try {
       const message = req.body;
@@ -154,8 +155,9 @@ exports.devapi = [
     }
   },
 ];
+export { devapi };
 
-exports.generateFileEmbeddings = [
+const generateFileEmbeddings = [
   async (req: any, res: any) => {
     try {
       await generateEmbedding("bjp_input.txt");
@@ -171,3 +173,4 @@ exports.generateFileEmbeddings = [
     }
   },
 ];
+export { generateFileEmbeddings };

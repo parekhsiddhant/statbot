@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-const ChatbotController = require("../controllers/chatbot");
+import * as ChatbotController from "../controllers/chatbot";
 
 const router = express.Router();
 
@@ -28,6 +28,9 @@ router.get("/", function (req: any, res: any) {
 // router.post("/get-audio-from-text", ChatbotController.getAudioFromText);
 
 router.post("/devapi", ChatbotController.devapi);
-router.post("/generateFileEmbeddings", ChatbotController.generateFileEmbeddings);
+router.post(
+  "/generateFileEmbeddings",
+  ChatbotController.generateFileEmbeddings
+);
 
-module.exports = router;
+export default router;
