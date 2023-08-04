@@ -3,8 +3,8 @@ import * as openAiHelper from "../helpers/openAiHelper";
 import * as pineconeHelper from "../helpers/pineconeHelper";
 import rules from "./rules";
 import * as apiResponse from "../helpers/apiResponse";
-import qrcode from "qrcode-terminal";
-import { Client } from "whatsapp-web.js";
+// import qrcode from "qrcode-terminal";
+// import { Client } from "whatsapp-web.js";
 import ChatsModel from "../models/ChatsModel";
 
 const authorizedUsers = [
@@ -62,7 +62,10 @@ const handleWhatsappMessage = async (message: any) => {
     });
     if (existingChat) {
       chatsArray = existingChat.chats;
-      if (chatsArray.at(-1).role === "user") {
+      if (
+        chatsArray.length &&
+        chatsArray[chatsArray.length - 1].role === "user"
+      ) {
         return "Please wait for your first question to be processed!";
       }
       chatsArray.push({ role: "user", content: messageBody });
@@ -85,11 +88,15 @@ const handleWhatsappMessage = async (message: any) => {
         chats: initialChats,
       });
       await newChat.save();
+      if (!newChat) throw new Error("Could not update conversation in DB!");
 
       chatsArray = newChat.chats;
     }
 
-    if (chatsArray.length && chatsArray.at(-1).role === "user") {
+    if (
+      chatsArray.length &&
+      chatsArray[chatsArray.length - 1].role === "user"
+    ) {
       const result = await getModelResponse(chatsArray);
       const updatedChat = await ChatsModel.findOneAndUpdate(
         { userId: sender, source: "whatsapp" },
