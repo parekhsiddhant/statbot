@@ -3,9 +3,9 @@ import * as openAiHelper from "../helpers/openAiHelper";
 import * as pineconeHelper from "../helpers/pineconeHelper";
 import rules from "./rules";
 import * as apiResponse from "../helpers/apiResponse";
-// import qrcode from "qrcode-terminal";
-// import { Client } from "whatsapp-web.js";
+import qrcode from "qrcode-terminal";
 import ChatsModel from "../models/ChatsModel";
+import { Client, DefaultOptions } from "whatsapp-web.js";
 
 const authorizedUsers = [
   "917719992025@c.us",
@@ -15,7 +15,7 @@ const authorizedUsers = [
 
 const TOKEN_LIMIT_GPT = 4096 - 500;
 
-// const whatsappClient = new Client();
+// const whatsappClient = new Client(DefaultOptions);
 
 // whatsappClient.on("qr", (qr: any) => {
 //   qrcode.generate(qr, { small: true });
@@ -122,8 +122,6 @@ const getModelResponse = async (chats: any) => {
 
     // Semantic search on vector database
     const response = await pineconeHelper.query(embedding);
-
-    console.log("Semantic search response - ", response);
 
     // Create context for gpt to answer question
     let mergedContext = "";

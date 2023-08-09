@@ -3,8 +3,8 @@ import { encode } from "gpt-3-encoder";
 import { createEmbedding } from "../helpers/openAiHelper";
 import * as pineconeHelper from "../helpers/pineconeHelper";
 
-const MAX_CHUNK_SIZE = 200;
-const MIN_CHUNK_SIZE = 100;
+const MAX_CHUNK_SIZE = 400;
+const MIN_CHUNK_SIZE = 200;
 
 const chunkText = async (text: string) => {
   try {
@@ -85,7 +85,7 @@ const chunkText = async (text: string) => {
 const generateEmbedding = async (inputFileName: any) => {
   try {
     console.log("Reading file...");
-    const inputFilePath = __dirname + "/../embeddingData/bjp_input.txt";
+    const inputFilePath = __dirname + "/../embeddingData/input_data.txt";
     let text = fs.readFileSync(inputFilePath, {
       encoding: "utf-8",
       flag: "r",
