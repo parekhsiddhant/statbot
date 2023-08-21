@@ -15,38 +15,38 @@ const authorizedUsers = [
 
 const TOKEN_LIMIT_GPT = 4096 - 500;
 
-// const whatsappClient = new Client(DefaultOptions);
+const whatsappClient = new Client(DefaultOptions);
 
-// whatsappClient.on("qr", (qr: any) => {
-//   qrcode.generate(qr, { small: true });
-// });
+whatsappClient.on("qr", (qr: any) => {
+  qrcode.generate(qr, { small: true });
+});
 
-// whatsappClient.on("ready", () => {
-//   console.log("Client is ready!");
-// });
+whatsappClient.on("ready", () => {
+  console.log("Client is ready!");
+});
 
-// whatsappClient.initialize();
+whatsappClient.initialize();
 
-// whatsappClient.on("message", async (message: any) => {
-//   try {
-//     if (authorizedUsers.includes(message.from)) {
-//       const response = await handleWhatsappMessage(message);
-//       console.log("Got response for user");
-//       if (response) whatsappClient.sendMessage(message.from, response);
-//       else
-//         whatsappClient.sendMessage(
-//           message.from,
-//           "Some error occured, please try again!"
-//         );
-//     }
-//   } catch (err) {
-//     console.log("Returning error to user");
-//     whatsappClient.sendMessage(
-//       message.from,
-//       "Some error occured, please try again!"
-//     );
-//   }
-// });
+whatsappClient.on("message", async (message: any) => {
+  try {
+    if (authorizedUsers.includes(message.from)) {
+      const response = await handleWhatsappMessage(message);
+      console.log("Got response for user");
+      if (response) whatsappClient.sendMessage(message.from, response);
+      else
+        whatsappClient.sendMessage(
+          message.from,
+          "Some error occured, please try again!"
+        );
+    }
+  } catch (err) {
+    console.log("Returning error to user");
+    whatsappClient.sendMessage(
+      message.from,
+      "Some error occured, please try again!"
+    );
+  }
+});
 
 const handleWhatsappMessage = async (message: any) => {
   try {
@@ -148,7 +148,6 @@ const devapi = [
   async function (req: any, res: any) {
     try {
       const message = req.body;
-      console.log(message);
       const response = await handleWhatsappMessage(message);
 
       return apiResponse.successResponseWithData(res, "Success", {
