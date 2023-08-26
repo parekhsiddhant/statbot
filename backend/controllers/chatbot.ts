@@ -235,24 +235,19 @@ exports.getAudioFromText = [
   },
 ];
 
-// exports.devapi = [
-//   async function (req: any, res: any) {
-//     try {
-//       console.log(req.body.chats);
-//       const originalChats = JSON.parse(req.body.chats);
-//       let chats = [...originalChats];
+const devapi = [
+  async function (req: any, res: any) {
+    try {
+      const message = req.body;
+      const response = await handleWhatsappMessage(message);
 
-//       if (chats?.length) {
-//         const response = await getModelResponse(chats);
-//         chats = [...response];
-//       }
-
-//       return apiResponse.successResponseWithData(res, "Success", {
-//         chats: chats,
-//       });
-//     } catch (err: any) {
-//       console.log(err);
-//       return apiResponse.ErrorResponse(res, err.message);
-//     }
-//   },
-// ];
+      return apiResponse.successResponseWithData(res, "Success", {
+        response: response,
+      });
+    } catch (err: any) {
+      console.log(err.message);
+      return apiResponse.ErrorResponse(res, err.message);
+    }
+  },
+];
+export { devapi };
