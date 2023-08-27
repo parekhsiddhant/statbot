@@ -9,7 +9,7 @@ const qrcode = require("qrcode-terminal");
 const { Client } = require("whatsapp-web.js");
 const ChatsModel = require("../models/ChatsModel");
 
-const authorizedUsers = ["917719992025@c.us", "919739537793@c.us", "919989348399@c.us"];
+const authorizedUsers = ["917719992025@c.us", "919739537793@c.us", "919989348399@c.us", "919160389999@c.us"];
 
 const whatsappClient = new Client();
 
