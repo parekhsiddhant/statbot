@@ -1,11 +1,14 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const ChatsSchema = new mongoose.Schema(
   {
     userId: {
       type: String,
       required: true,
-      unique: true,
+    },
+    client: {
+      type: String,
+      required: true,
     },
     source: {
       type: String,

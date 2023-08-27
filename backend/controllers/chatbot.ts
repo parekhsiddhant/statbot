@@ -1,15 +1,16 @@
-import fs from "fs";
-import util from "util";
 const { Configuration, OpenAIApi } = require("openai");
 const apiResponse = require("../helpers/apiResponse");
-const textToSpeech = require("@google-cloud/text-to-speech");
-const ttsClient = new textToSpeech.TextToSpeechClient();
-const initialPrompt = require("./initial_prompt");
 const qrcode = require("qrcode-terminal");
 const { Client } = require("whatsapp-web.js");
 const ChatsModel = require("../models/ChatsModel");
+const ContextModel = require("../models/ContextModel");
 
-const authorizedUsers = ["917719992025@c.us", "919739537793@c.us", "919989348399@c.us", "919160389999@c.us"];
+const authorizedUsers = [
+  "917719992025@c.us",
+  "919739537793@c.us",
+  "919989348399@c.us",
+  "919160389999@c.us",
+];
 
 const whatsappClient = new Client();
 
@@ -46,7 +47,7 @@ const handleWhatsappMessage = async (message: any) => {
     let chatsArray;
     const existingChat = await ChatsModel.findOne({
       userId: sender,
-      source: "whatsapp",
+      client: process.env["CLIENT"],
     });
     if (existingChat) {
       chatsArray = existingChat.chats;
@@ -55,20 +56,24 @@ const handleWhatsappMessage = async (message: any) => {
       }
       chatsArray.push({ role: "user", content: messageBody });
       const updatedChat = await ChatsModel.findOneAndUpdate(
-        { userId: sender, source: "whatsapp" },
+        { userId: sender, client: process.env["CLIENT"] },
         { chats: chatsArray },
         { new: true }
       );
       chatsArray = updatedChat.chats;
     } else {
-      const chats = [{ role: "user", content: initialPrompt.default }];
+      const initialPrompt = await ContextModel.findOne({
+        client: process.env["CLIENT"],
+      });
+
+      const chats = [{ role: "user", content: initialPrompt.context }];
       const initialChats = await getModelResponse(chats);
 
       initialChats.push({ role: "user", content: messageBody });
 
       const newChat = new ChatsModel({
         userId: sender,
-        source: "whatsapp",
+        client: process.env["CLIENT"],
         chats: initialChats,
       });
       await newChat.save();
@@ -79,7 +84,7 @@ const handleWhatsappMessage = async (message: any) => {
     if (chatsArray.length && chatsArray.at(-1).role === "user") {
       const result = await getModelResponse(chatsArray);
       const updatedChat = await ChatsModel.findOneAndUpdate(
-        { userId: sender, source: "whatsapp" },
+        { userId: sender, client: process.env["CLIENT"] },
         { $push: { chats: result.at(-1) } },
         { new: true }
       );
@@ -88,35 +93,6 @@ const handleWhatsappMessage = async (message: any) => {
     }
   } catch (err: any) {
     console.log(err);
-  }
-};
-
-const transcribeAudio = async (chats: any, audioFilePath: any) => {
-  try {
-    const configuration = new Configuration({
-      apiKey: process.env["OPENAI_API_KEY"],
-    });
-    const openai = new OpenAIApi(configuration);
-    const res = await openai.createTranscription(
-      fs.createReadStream(audioFilePath),
-      "whisper-1",
-      "StaTwig",
-      "json",
-      0,
-      "en"
-    );
-    if (res.status === 200 && res?.data?.text) {
-      let message = res.data.text;
-      const chat = {
-        role: "user",
-        content: message,
-      };
-      let localChats = [...chats, chat];
-      return localChats;
-    }
-  } catch (err) {
-    console.log("Error in transcribe - ", err);
-    throw err;
   }
 };
 
@@ -156,84 +132,6 @@ const getModelResponse = async (chats: any) => {
     throw err;
   }
 };
-
-const googleTTS = async (text: any) => {
-  try {
-    const payload = {
-      input: { text: text },
-      voice: { languageCode: "en-US", ssmlGender: "NEUTRAL" },
-      audioConfig: { audioEncoding: "MP3" },
-    };
-
-    const [res] = await ttsClient.synthesizeSpeech(payload);
-    const writeFile = util.promisify(fs.writeFile);
-    const fileName = Date.now() + "-output.mp3";
-    await writeFile(`outputs/${fileName}`, res.audioContent, "binary");
-
-    return fileName;
-  } catch (err) {
-    console.log("Error in TTS - ", err);
-    throw err;
-  }
-};
-
-exports.answerUserQuery = [
-  async function (req: any, res: any) {
-    try {
-      const dir = `uploads`;
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
-      }
-
-      const audioFilePath = req.file.path;
-      const originalChats = JSON.parse(req.body.chats);
-      let chats = [...originalChats];
-
-      if (!chats?.length) {
-        chats = [{ role: "user", content: initialPrompt.default }];
-        const initialChats = await getModelResponse(chats);
-        chats = [...initialChats];
-      }
-
-      const asrResult = await transcribeAudio(chats, audioFilePath);
-
-      const openAiResult = await getModelResponse(asrResult);
-
-      fs.unlink(audioFilePath, (err) => {
-        if (err) throw err;
-      });
-
-      return apiResponse.successResponseWithData(res, "Success", {
-        chats: openAiResult,
-      });
-    } catch (err: any) {
-      return apiResponse.ErrorResponse(res, err.message);
-    }
-  },
-];
-
-exports.getAudioFromText = [
-  async function (req: any, res: any) {
-    try {
-      const dir = `outputs`;
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir);
-      }
-
-      const text = req.body?.text || null;
-      if (!text || text == "") {
-        throw new Error("Text not provided!");
-      }
-
-      const ttsFilename = await googleTTS(text);
-      res.set("Content-Type", "audio/mpeg");
-      res.set("Content-Disposition", `attachment; filename="${ttsFilename}"`);
-      res.sendFile(ttsFilename, { root: "outputs" });
-    } catch (err: any) {
-      return apiResponse.ErrorResponse(res, err.message);
-    }
-  },
-];
 
 const devapi = [
   async function (req: any, res: any) {
