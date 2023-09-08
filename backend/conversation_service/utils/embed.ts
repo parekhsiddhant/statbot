@@ -82,10 +82,10 @@ const chunkText = async (text: string) => {
   }
 };
 
-const generateEmbedding = async (inputFileName: any) => {
+const generateEmbedding = async (inputFileName: any, client: string) => {
   try {
     console.log("Reading file...");
-    const inputFilePath = __dirname + "/../embeddingData/input_data.txt";
+    const inputFilePath = __dirname + "/../embeddingData/" + inputFileName;
     let text = fs.readFileSync(inputFilePath, {
       encoding: "utf-8",
       flag: "r",
@@ -96,11 +96,12 @@ const generateEmbedding = async (inputFileName: any) => {
     const chunkedText = await chunkText(text);
     const upsertPayload: Array<any> = [];
 
-    console.log("Chunking complete, creating embeddings...");
+    console.log("Chunking complete, creating embeddings...", chunkedText.length);
 
     let count = 0;
     for (let i = 0; i < chunkedText.length; ++i) {
       const embedding = await createEmbedding(chunkedText[i].content);
+      if(i%10 === 0) console.log(i + " done");
 
       upsertPayload.push({
         content: chunkedText[i].content,
@@ -113,7 +114,7 @@ const generateEmbedding = async (inputFileName: any) => {
 
     console.log("Embeddings created, storing to pinecone...");
 
-    await pineconeHelper.upsert(upsertPayload);
+    await pineconeHelper.upsert(upsertPayload, client);
 
     console.log("Stored " + count + " embeddings to pinecone!");
 

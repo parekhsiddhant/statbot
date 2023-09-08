@@ -9,7 +9,7 @@ dotenv.config({ path: __dirname + "/../.env" });
 const updateUserConversation = async (userId: any, localChats: any) => {
   try {
     const updatedChat = await ChatsModel.findOneAndUpdate(
-      { _id: userId, client: process.env["CLIENT"] },
+      { userId: userId, client: process.env["CLIENT"] },
       { $set: { chats: localChats } },
       { new: true }
     );
@@ -42,73 +42,88 @@ const checkForExcessiveMessages = (chats: any) => {
 const handleWhatsappMessage = async (message: any) => {
   try {
     // Fetch user if exists
-    const user = await UserModel.findOne({ phone: message.from });
+    console.log("Got message from - ", message.from);
+    let user = await UserModel.findOne({
+      phone: message.from,
+      source: "whatsapp",
+    });
 
-    if (user) {
-      // Check whether user is authorized
-      const isUserAuthorized = await ClientsModel.findOne({
-        name: process.env["CLIENT"],
-        authorizedUsers: user._id,
+    // Create new user if does not exist
+    if (!user) {
+      user = new UserModel({
+        phone: message.from,
+        source: "whatsapp",
+      });
+      await user.save();
+    }
+
+    // Check whether user is authorized
+    const isUserAuthorized = await ClientsModel.findOne({
+      name: process.env["CLIENT"],
+      authorizedUsers: message.from,
+    });
+
+    if (isUserAuthorized) {
+      let chats = await ChatsModel.findOne({
+        userId: user._id,
+        client: process.env["CLIENT"],
       });
 
-      if (isUserAuthorized) {
-        let chats = await ChatsModel.findOne({
+      if (chats) {
+        // Check whether a pending message is there
+        const isSpamming = checkForExcessiveMessages(chats);
+        if (isSpamming) {
+          message.reply("Wait for your earlier request to be fulfiled.");
+          return;
+        }
+      } else {
+        chats = new ChatsModel({
           userId: user._id,
           client: process.env["CLIENT"],
+          chats: [],
         });
+        await chats.save();
+      }
 
-        if (chats) {
-          // Check whether a pending message is there
-          const isSpamming = checkForExcessiveMessages(chats);
-          if (isSpamming) {
-            message.reply("Wait for your earlier request to be fulfiled.");
-            return;
-          }
-        } else {
-          chats = new ChatsModel({
-            userId: user._id,
-            client: process.env["CLIENT"],
-            chats: [],
-          });
-          await chats.save();
-        }
+      const userMessage = {
+        role: "user",
+        content: message?.body,
+      };
+      const localChats = [...chats.chats, userMessage];
 
-        const userMessage = {
-          role: "user",
-          content: message?.body,
-        };
-        const localChats = [...chats.chats, userMessage];
+      // Update conversation in DB
+      const updatedChats = await updateUserConversation(user._id, localChats);
 
-        // Update conversation in DB
-        const updatedChats = await updateUserConversation(user._id, localChats);
-
-        // Call conversation service
-        const modelResponse = await axios.post("http://localhost:4000/chatCompletion", {
+      // Call conversation service
+      const modelResponse = await axios.post(
+        "http://localhost:4000/chatCompletion",
+        {
           chats: updatedChats?.chats,
           client: process.env["CLIENT"],
-        });
-
-        if (modelResponse.status === 200) {
-          // Reply to message
-          const { modelChats } = modelResponse.data;
-          const latestMessage = modelChats.at(-1);
-          updateUserConversation(user._id, modelChats);
-          message.reply(latestMessage.content);
-          return;
-        } else {
-          // Handle retry/waiting in case of overload or error
-          const errorMessage = {
-            role: "system",
-            content:
-              "We are overloaded at the moment, please try after some time.",
-          };
-          updateUserConversation(user._id, [...localChats, errorMessage]);
-          message.reply(errorMessage.content);
-          return;
         }
+      );
+
+      if (modelResponse.status === 200) {
+        // Reply to message
+        const modelChats = modelResponse.data.data;
+        const latestMessage = modelChats.at(-1);
+        updateUserConversation(user._id, modelChats);
+        message.reply(latestMessage.content);
+        return;
+      } else {
+        // Handle retry/waiting in case of overload or error
+        const errorMessage = {
+          role: "system",
+          content:
+            "We are overloaded at the moment, please try after some time.",
+        };
+        updateUserConversation(user._id, [...localChats, errorMessage]);
+        message.reply(errorMessage.content);
+        return;
       }
     }
   } catch (err) {
+    console.log(err);
     message.reply("Some error occurred, please try again after some time.");
   }
 };

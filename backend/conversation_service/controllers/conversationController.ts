@@ -31,7 +31,7 @@ const handleUserMessage = async (req: any, res: any) => {
       let initialChats = [{ role: "user", content: rules }];
       initialChats = await getModelResponse(initialChats, client);
       initialChats.push(chats[0]);
-      localChats = initialChats;
+      localChats = [...initialChats, chats[0]];
     }
 
     // Get model response for user query
