@@ -1,0 +1,9 @@
+Use node 16
+
+Whatsapp handler
+
+Currently using whatsapp-web.js which is a headless whatsapp web client.
+Run the server and scan the QR code to start it.
+Once the client is ready, you can start sending messages.
+
+No code change needed for different clients, just update the .env and run a new instance.
