@@ -2,15 +2,13 @@
 	"compilerOptions": {
 		"target": "ESNext",
 		"module": "commonjs",
-		"lib": ["es6", "ESNext", "ES2021.String"],
+		"lib": ["es6", "ESNext", "ES2021.String", "dom"],
 		"allowJs": true,
 		"outDir": "build",
-		"rootDir": "src",
 		"strict": true,
 		"noImplicitAny": true,
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
 		"forceConsistentCasingInFileNames": true
-	},
-	"files":["types.d.ts"]
+	}
 }

@@ -1,4 +1,3 @@
-import generateEmbedding from "../utils/embed";
 import * as openAiHelper from "../helpers/openAiHelper";
 import * as pineconeHelper from "../helpers/pineconeHelper";
 import * as apiResponse from "../helpers/apiResponse";

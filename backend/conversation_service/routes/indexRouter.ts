@@ -1,5 +1,4 @@
 import express from "express";
-import multer from "multer";
 import * as ChatbotController from "../controllers/embeddingsController";
 import * as ConversationController from "../controllers/conversationController";
 
