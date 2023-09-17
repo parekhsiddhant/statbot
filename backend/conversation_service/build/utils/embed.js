@@ -27,11 +27,20 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const fs_1 = __importDefault(require("fs"));
+const pdf_parse_1 = __importDefault(require("pdf-parse"));
 const gpt_3_encoder_1 = require("gpt-3-encoder");
 const openAiHelper_1 = require("../helpers/openAiHelper");
 const pineconeHelper = __importStar(require("../helpers/pineconeHelper"));
 const MAX_CHUNK_SIZE = 400;
 const MIN_CHUNK_SIZE = 200;
+const getFileExtension = (filename) => {
+    try {
+        return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 2);
+    }
+    catch (err) {
+        throw err;
+    }
+};
 const chunkText = async (text) => {
     try {
         let chunks = [];
@@ -99,11 +108,31 @@ const chunkText = async (text) => {
 const generateEmbedding = async (inputFileName, client) => {
     try {
         console.log("Reading file...");
+        const fileExtension = getFileExtension(inputFileName);
+        console.log(fileExtension);
         const inputFilePath = __dirname + "/../embeddingData/" + inputFileName;
-        let text = fs_1.default.readFileSync(inputFilePath, {
-            encoding: "utf-8",
-            flag: "r",
-        });
+        let text = "";
+        switch (fileExtension) {
+            case "pdf": {
+                // Read pdf
+                let dataBuffer = fs_1.default.readFileSync(inputFilePath);
+                await (0, pdf_parse_1.default)(dataBuffer).then((data) => {
+                    text = data.text;
+                });
+                break;
+            }
+            case "txt": {
+                // Read txt
+                text = fs_1.default.readFileSync(inputFilePath, {
+                    encoding: "utf-8",
+                    flag: "r",
+                });
+                break;
+            }
+            default: {
+                throw new Error("File extension invalid!");
+            }
+        }
         console.log("File read! Chunking data...");
         const chunkedText = await chunkText(text);
         const upsertPayload = [];
