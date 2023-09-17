@@ -37,26 +37,26 @@ const checkForExcessiveMessages = (chats) => {
 };
 const handleWhatsappMessage = async (message) => {
     try {
-        // Fetch user if exists
-        console.log("Got message from - ", message.from);
-        let user = await UserModel_1.default.findOne({
-            phone: message.from,
-            source: "whatsapp",
-        });
-        // Create new user if does not exist
-        if (!user) {
-            user = new UserModel_1.default({
-                phone: message.from,
-                source: "whatsapp",
-            });
-            await user.save();
-        }
         // Check whether user is authorized
         const isUserAuthorized = await ClientsModel_1.default.findOne({
             name: process.env["CLIENT"],
             authorizedUsers: message.from,
         });
         if (isUserAuthorized) {
+            // Fetch user if exists
+            console.log("Got message from - ", message.from);
+            let user = await UserModel_1.default.findOne({
+                phone: message.from,
+                source: "whatsapp",
+            });
+            // Create new user if does not exist
+            if (!user) {
+                user = new UserModel_1.default({
+                    phone: message.from,
+                    source: "whatsapp",
+                });
+                await user.save();
+            }
             let chats = await ChatsModel_1.default.findOne({
                 userId: user._id,
                 client: process.env["CLIENT"],
