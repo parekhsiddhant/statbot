@@ -1,10 +1,19 @@
 import fs from "fs";
+import pdf from "pdf-parse";
 import { encode } from "gpt-3-encoder";
 import { createEmbedding } from "../helpers/openAiHelper";
 import * as pineconeHelper from "../helpers/pineconeHelper";
 
 const MAX_CHUNK_SIZE = 400;
 const MIN_CHUNK_SIZE = 200;
+
+const getFileExtension = (filename: string) => {
+  try {
+    return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 2);
+  } catch (err) {
+    throw err;
+  }
+};
 
 const chunkText = async (text: string) => {
   try {
@@ -85,23 +94,49 @@ const chunkText = async (text: string) => {
 const generateEmbedding = async (inputFileName: any, client: string) => {
   try {
     console.log("Reading file...");
+    const fileExtension = getFileExtension(inputFileName);
+    console.log(fileExtension);
+
     const inputFilePath = __dirname + "/../embeddingData/" + inputFileName;
-    let text = fs.readFileSync(inputFilePath, {
-      encoding: "utf-8",
-      flag: "r",
-    });
+
+    let text = "";
+
+    switch (fileExtension) {
+      case "pdf": {
+        // Read pdf
+        let dataBuffer = fs.readFileSync(inputFilePath);
+        await pdf(dataBuffer).then((data: any) => {
+          text = data.text;
+        });
+        break;
+      }
+      case "txt": {
+        // Read txt
+        text = fs.readFileSync(inputFilePath, {
+          encoding: "utf-8",
+          flag: "r",
+        });
+        break;
+      }
+      default: {
+        throw new Error("File extension invalid!");
+      }
+    }
 
     console.log("File read! Chunking data...");
 
     const chunkedText = await chunkText(text);
     const upsertPayload: Array<any> = [];
 
-    console.log("Chunking complete, creating embeddings...", chunkedText.length);
+    console.log(
+      "Chunking complete, creating embeddings...",
+      chunkedText.length
+    );
 
     let count = 0;
     for (let i = 0; i < chunkedText.length; ++i) {
       const embedding = await createEmbedding(chunkedText[i].content);
-      if(i%10 === 0) console.log(i + " done");
+      if (i % 10 === 0) console.log(i + " done");
 
       upsertPayload.push({
         content: chunkedText[i].content,
