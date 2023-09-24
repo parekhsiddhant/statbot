@@ -38,23 +38,23 @@ const handleUserMessage = async (req, res) => {
             return apiResponse.validationErrorWithData(res, "Please check the data sent!", req?.body);
         }
         let localChats = chats;
+        const clientInfo = await ClientsModel_1.default.findOne({ name: client });
+        if (!clientInfo) {
+            return apiResponse.validationErrorWithData(res, "Client not found!", {
+                client: client,
+            });
+        }
         // Check whether new conversation
         if (chats?.length === 1) {
             // Initialize conversation
-            const clientInfo = await ClientsModel_1.default.findOne({ name: client });
-            if (!clientInfo) {
-                return apiResponse.validationErrorWithData(res, "Client not found!", {
-                    client: client,
-                });
-            }
             const rules = clientInfo.context;
             let initialChats = [{ role: "user", content: rules }];
-            initialChats = await getModelResponse(initialChats, client);
+            initialChats = await getModelResponse(initialChats, clientInfo.name, clientInfo.prompt);
             initialChats.push(chats[0]);
             localChats = [...initialChats, chats[0]];
         }
         // Get model response for user query
-        const result = await getModelResponse(localChats, client);
+        const result = await getModelResponse(localChats, clientInfo.name, clientInfo.prompt);
         return apiResponse.successResponseWithData(res, "Got model response", result);
     }
     catch (err) {
@@ -63,27 +63,28 @@ const handleUserMessage = async (req, res) => {
     }
 };
 exports.handleUserMessage = handleUserMessage;
-const getModelResponse = async (chats, client) => {
+const getModelResponse = async (chats, client, prompt) => {
     try {
         let payload = chats;
         const latestUserMessage = payload.at(-1).content;
         // Embed the question
         const embedding = await openAiHelper.createEmbedding(latestUserMessage);
+        const clientName = client;
         // Semantic search on vector database
-        const response = await pineconeHelper.query(embedding, client);
+        const response = await pineconeHelper.query(embedding, clientName);
         // Create context for gpt to answer question
         let mergedContext = "";
         response?.map((vector) => {
             mergedContext + vector.metadata.content;
         });
-        const introduction = "Answer this question from the following context only in a conversational manner and restrict it to 100 words. Convince the user to vote for your party while answering question.";
+        const introduction = prompt;
         const queryWithContext = latestUserMessage + "\n" + introduction + " " + mergedContext;
         payload.at(-1).content = queryWithContext;
         const localChats = await openAiHelper.createChatCompletion(payload);
         return localChats;
     }
     catch (err) {
-        console.log("Error in chat - ", err.message);
+        console.log("Error in chat - ", err);
         throw err;
     }
 };

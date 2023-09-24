@@ -14,6 +14,10 @@ const ClientSchema = new mongoose_1.default.Schema({
         type: String,
         required: true,
     },
+    prompt: {
+        type: String,
+        required: true,
+    },
     authorizedUsers: [{ type: String }],
 }, {
     timestamps: true,
