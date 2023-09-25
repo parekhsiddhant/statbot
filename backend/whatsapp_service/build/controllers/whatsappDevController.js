@@ -23,11 +23,13 @@ const checkForExcessiveMessages = (chats) => {
     try {
         // Check whether pending call exists & Check how long ago it was
         const lastMessage = chats?.chats?.at(-1);
-        const updatedAt = new Date(chats?.updatedAt);
-        const now = new Date();
-        const timeDifferenceInMinutes = (now.getTime() - updatedAt.getTime()) / (1000 * 60);
-        if (lastMessage.role === "user" && timeDifferenceInMinutes < 1) {
-            return true;
+        if (lastMessage) {
+            const updatedAt = new Date(chats?.updatedAt);
+            const now = new Date();
+            const timeDifferenceInMinutes = (now.getTime() - updatedAt.getTime()) / (1000 * 60);
+            if (lastMessage.role === "user" && timeDifferenceInMinutes < 1) {
+                return true;
+            }
         }
         return false;
     }
@@ -42,6 +44,7 @@ const handleWhatsappMessage = async (message) => {
             name: process.env["CLIENT"],
             authorizedUsers: message.from,
         });
+        console.log("Message from - ", message.from);
         if (isUserAuthorized) {
             // Fetch user if exists
             console.log("Got message from - ", message.from);
