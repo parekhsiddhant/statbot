@@ -11,33 +11,36 @@ class ConversationController {
   ) => {
     try {
       let payload = chats;
-      const latestUserMessage = payload.at(-1).content;
 
-      // Embed the question
-      const embedding = await openAiHelper.createEmbedding(latestUserMessage);
+      // Only embed user messages onwards
+      if (payload.length > 1) {
+        const latestUserMessage = payload.at(-1).content;
 
-      const clientName = client;
+        // Embed the question
+        const embedding = await openAiHelper.createEmbedding(latestUserMessage);
 
-      // Semantic search on vector database
-      const response = await pineconeHelper.query(embedding, clientName);
+        const clientName = client;
 
-      // Create context for gpt to answer question
-      let mergedContext = "";
-      response?.map((vector) => {
-        mergedContext + (vector as any).metadata.content;
-      });
+        // Semantic search on vector database
+        const response: any = await pineconeHelper.query(embedding, clientName);
 
-      const introduction = prompt;
+        // Create context for gpt to answer question
+        let mergedContext = "";
+        response.map((vector: any) => {
+          mergedContext += vector.metadata.content;
+        });
 
-      const queryWithContext =
-        latestUserMessage + "\n" + introduction + " " + mergedContext;
+        const introduction = prompt;
 
-      payload.at(-1).content = queryWithContext;
+        const queryWithContext =
+          latestUserMessage + "\n" + introduction + " " + mergedContext;
+
+        payload.at(-1).content = queryWithContext;
+      }
 
       const localChats = await openAiHelper.createChatCompletion(payload);
       return localChats;
     } catch (err: any) {
-      console.log("Error in chat - ", err);
       throw err;
     }
   };
@@ -73,9 +76,8 @@ class ConversationController {
           clientInfo.prompt
         );
         initialChats.push(chats[0]);
-        localChats = [...initialChats, chats[0]];
+        localChats = [...initialChats];
       }
-
       // Get model response for user query
       const result = await this.getModelResponse(
         localChats,
@@ -89,7 +91,7 @@ class ConversationController {
         result
       );
     } catch (err: any) {
-      console.log("Error in getting model response - ", err);
+      console.log("Error in getting model response - ", err.message);
       return APIResponse.errorResponse(res, err.message);
     }
   };

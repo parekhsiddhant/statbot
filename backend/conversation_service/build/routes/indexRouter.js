@@ -28,11 +28,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const ChatbotController = __importStar(require("../controllers/embeddingsController"));
-const ConversationController = __importStar(require("../controllers/conversationController"));
+const conversationController_1 = __importDefault(require("../controllers/conversationController"));
 const router = express_1.default.Router();
 router.get("/", function (req, res) {
     res.status(200).json({ status: "OK", message: "Chatbot up and running!" });
 });
 router.post("/generateFileEmbeddings", ChatbotController.generateFileEmbeddings);
-router.post("/chatCompletion", ConversationController.handleUserMessage);
+router.post("/chatCompletion", conversationController_1.default.handleUserMessage);
 exports.default = router;

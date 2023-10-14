@@ -18,7 +18,7 @@ class WhatsappClient extends whatsapp_web_js_1.Client {
             qrcode_terminal_1.default.generate(qr, { small: true });
         });
         this.on("message", (message) => {
-            (0, whatsappDevController_1.default)(message);
+            whatsappDevController_1.default.handleWhatsappMessage(message);
         });
     }
 }

@@ -1,5 +1,5 @@
 import generateEmbedding from "../utils/embed";
-import * as apiResponse from "../helpers/apiResponse";
+import APIResponse from "../helpers/apiResponse";
 
 const generateFileEmbeddings = [
   async (req: any, res: any) => {
@@ -7,14 +7,13 @@ const generateFileEmbeddings = [
       const { inputFileName, client } = req.body;
       await generateEmbedding(inputFileName, client);
 
-      return apiResponse.successResponseWithData(
+      return APIResponse.successResponseWithData(
         res,
         "Successfully completed!",
         {}
       );
     } catch (err: any) {
       console.log("Error - ", err.message);
-      return apiResponse.ErrorResponse(res, err.message);
     }
   },
 ];

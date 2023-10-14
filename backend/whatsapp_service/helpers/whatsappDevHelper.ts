@@ -1,6 +1,6 @@
 import { Client, DefaultOptions } from "whatsapp-web.js";
 import qrcode from "qrcode-terminal";
-import handleWhatsappMessage from "../controllers/whatsappDevController";
+import WhatsappDevController from "../controllers/whatsappDevController";
 
 class WhatsappClient extends Client {
   constructor(options: any) {
@@ -15,7 +15,7 @@ class WhatsappClient extends Client {
     });
 
     this.on("message", (message) => {
-      handleWhatsappMessage(message);
+      WhatsappDevController.handleWhatsappMessage(message);
     });
   }
 }
