@@ -1,6 +1,6 @@
 import express from "express";
 import * as ChatbotController from "../controllers/embeddingsController";
-import * as ConversationController from "../controllers/conversationController";
+import ConversationController from "../controllers/conversationController";
 
 const router = express.Router();
 
