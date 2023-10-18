@@ -38,9 +38,12 @@ class ConversationController {
         payload.at(-1).content = queryWithContext;
       }
 
-      const localChats = await openAiHelper.createChatCompletion(payload);
+      const modelChats = await openAiHelper.createChatCompletion(payload);
+      const localChats = [...chats, modelChats.at(-1)];
+
       return localChats;
     } catch (err: any) {
+      console.log("Error occurred in getting model response - ", err);
       throw err;
     }
   };
