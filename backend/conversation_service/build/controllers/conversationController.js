@@ -52,11 +52,9 @@ class ConversationController {
                 payload.at(-1).content = queryWithContext;
             }
             const modelChats = await openAiHelper.createChatCompletion(payload);
-            const localChats = [...chats, modelChats.at(-1)];
-            return localChats;
+            return modelChats;
         }
         catch (err) {
-            console.log("Error occurred in getting model response - ", err);
             throw err;
         }
     };
@@ -82,9 +80,13 @@ class ConversationController {
                 initialChats.push(chats[0]);
                 localChats = [...initialChats];
             }
+            const modelInput = localChats.map((elem) => {
+                return { ...elem };
+            });
             // Get model response for user query
-            const result = await this.getModelResponse(localChats, clientInfo.name, clientInfo.prompt);
-            return apiResponse_1.default.successResponseWithData(res, "Got model response", result);
+            const modelChats = await this.getModelResponse(modelInput, clientInfo.name, clientInfo.prompt);
+            localChats.push(modelChats.at(-1));
+            return apiResponse_1.default.successResponseWithData(res, "Got model response", localChats);
         }
         catch (err) {
             console.log("Error in getting model response - ", err.message);

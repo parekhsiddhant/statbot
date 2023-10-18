@@ -115,7 +115,7 @@ class WhatsappDevController {
           // Reply to message
           const modelChats = modelResponse.data.data;
           const latestMessage = modelChats.at(-1);
-          this.updateUserConversation(user._id, [...localChats, latestMessage]);
+          this.updateUserConversation(user._id, modelChats);
           message.reply(latestMessage.content);
           return;
         } else {
