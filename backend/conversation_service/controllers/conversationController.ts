@@ -14,7 +14,7 @@ class ConversationController {
 
       // Only embed user messages onwards
       if (payload.length > 1) {
-        const latestUserMessage = payload.at(-1).content;
+        const latestUserMessage = payload.at(-1).content.trim();
 
         // Embed the question
         const embedding = await openAiHelper.createEmbedding(latestUserMessage);
@@ -34,7 +34,7 @@ class ConversationController {
 
         const queryWithContext =
           latestUserMessage +
-          " " +
+          "\n" +
           introduction +
           "\n\n" +
           `"${mergedContext}"`;
