@@ -39,8 +39,6 @@ class ConversationController {
           "\n\n" +
           `"${mergedContext}"`;
 
-        console.log(queryWithContext);
-
         payload.at(-1).content = queryWithContext;
       }
 
