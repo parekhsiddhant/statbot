@@ -35,4 +35,5 @@ router.get("/", function (req, res) {
 });
 router.post("/generateFileEmbeddings", ChatbotController.generateFileEmbeddings);
 router.post("/chatCompletion", conversationController_1.default.handleUserMessage);
+// router.post("/getContext", ConversationController.getContextForText);
 exports.default = router;

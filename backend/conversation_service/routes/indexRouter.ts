@@ -14,4 +14,6 @@ router.post(
 );
 router.post("/chatCompletion", ConversationController.handleUserMessage);
 
+// router.post("/getContext", ConversationController.getContextForText);
+
 export default router;

@@ -50,7 +50,7 @@ const query = async (embed: Array<number>, client: string) => {
     const index = pineconeClient.Index(client);
     const queryRequest = {
       vector: embed,
-      topK: 5,
+      topK: 3,
       includeValues: false,
       includeMetadata: true,
     };

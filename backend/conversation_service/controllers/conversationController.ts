@@ -33,7 +33,13 @@ class ConversationController {
         const introduction = prompt;
 
         const queryWithContext =
-          latestUserMessage + "\n" + introduction + " " + mergedContext;
+          latestUserMessage +
+          " " +
+          introduction +
+          "\n\n" +
+          `"${mergedContext}"`;
+
+        console.log(queryWithContext);
 
         payload.at(-1).content = queryWithContext;
       }
@@ -98,6 +104,34 @@ class ConversationController {
       );
     } catch (err: any) {
       console.log("Error in getting model response - ", err.message);
+      return APIResponse.errorResponse(res, err.message);
+    }
+  };
+
+  getContextForText = async (req: any, res: any) => {
+    try {
+      const { text } = req.body;
+
+      const embedding = await openAiHelper.createEmbedding(text);
+
+      const clientName = "unfpa";
+
+      // Semantic search on vector database
+      const response: any = await pineconeHelper.query(embedding, clientName);
+
+      // Create context for gpt to answer question
+      let mergedContext = "";
+      response.map((vector: any) => {
+        mergedContext += vector.metadata.content;
+      });
+
+      return APIResponse.successResponseWithData(
+        res,
+        "Got context",
+        mergedContext
+      );
+    } catch (err: any) {
+      console.log(err);
       return APIResponse.errorResponse(res, err.message);
     }
   };
