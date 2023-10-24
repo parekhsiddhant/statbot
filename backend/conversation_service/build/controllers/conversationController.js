@@ -53,7 +53,6 @@ class ConversationController {
                     introduction +
                     "\n\n" +
                     `"${mergedContext}"`;
-                console.log(queryWithContext);
                 payload.at(-1).content = queryWithContext;
             }
             const modelChats = await openAiHelper.createChatCompletion(payload);
